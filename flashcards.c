@@ -315,8 +315,13 @@ read(const char *file)
 		die("flashcards: %s:", file);
 
 	for (i = 0; getline(&tmp, &len, fp) != -1; ++i) {
-		if (strcmp(tmp, "\n") != 0)
-			cfcards(tmp);
+		if (strcmp(tmp, "\n") == 0)
+			continue;
+
+		if (tmp[0] == '#')
+			continue;
+
+		cfcards(tmp);
 	}
 
 	free(tmp);
