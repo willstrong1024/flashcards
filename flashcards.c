@@ -52,8 +52,8 @@ ccmd(Flashcard f)
 		return fcard;
 	}
 
-	print(&answer, "\\answer{%s}", f.answer);
-	print(&hint, "\\hint{%s}", f.hint);
+	print(&answer, "{\\answer{%s}}", f.answer);
+	print(&hint, "{\\hint{%s}}", f.hint);
 
 	print(&back, f.sentence, answer);
 	print(&front, f.sentence, hint);
