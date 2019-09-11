@@ -29,7 +29,7 @@ void
 copy(const char *src, const char *dest)
 {
 	FILE *fin, *fout;
-	char tmp;
+	int tmp;
 
 	if ((fin = fopen(src, "r")) == NULL)
 		die("flashcards: %s:", src);
@@ -37,8 +37,8 @@ copy(const char *src, const char *dest)
 	if ((fout = fopen(dest, "w")) == NULL)
 		die("flashcards: %s:", dest);
 
-	while ((tmp = getc(fin)) != EOF)
-		putc(tmp, fout);
+	while ((tmp = fgetc(fin)) != EOF)
+		fputc(tmp, fout);
 
 	fclose(fin);
 	fclose(fout);

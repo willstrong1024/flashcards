@@ -1,4 +1,4 @@
-CFLAGS = -D_POSIX_C_SOURCE=200809L -Os -pedantic -std=c99 -Wall
+CFLAGS = -D_POSIX_C_SOURCE=200809L -g -Os -pedantic -std=c99 -Wall
 CC = gcc
 
 SRC = flashcards.c util.c

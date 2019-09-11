@@ -45,6 +45,11 @@ ccmd(Flashcard f)
 {
 	char *answer, *back, *fcard, *front, *hint;
 
+	if (f.answer == NULL && f.hint == NULL) {
+		print(&fcard, "\\flashcard\n{%s}\n{}\n\n", f.sentence);
+		return fcard;
+	}
+
 	print(&answer, "\\answer{%s}", f.answer);
 	print(&hint, "\\hint{%s}", f.hint);
 
@@ -180,8 +185,12 @@ extrblank(const char *s, Flashcard *f)
 {
 	char *cpy, *tmp;
 
-	if (nblanks(s) < 1)
+	if (nblanks(s) < 1) {
+		f->answer = NULL;
+		f->hint = NULL;
+
 		return;
+	}
 
 	cpy = strdup(s);
 	tmp = strstr(cpy, "{{") + 2;
@@ -276,6 +285,9 @@ insert(const char *s, int n, const char *file)
 	}
 
 	fclose(fp);
+
+	for (i = 0; i < lines; ++i)
+		free(buf[i]);
 	free(buf);
 }
 
@@ -364,6 +376,7 @@ rlines(char ***buf, FILE *fp)
 	}
 
 	free(tmp);
+
 	return i;
 }
 
@@ -394,7 +407,7 @@ main(int argc, char **argv)
 
 	read(argv[1]);
 	cfcmds();
-	insert(fcmdbuf, 4, "flashcards.tex");
+	insert(fcmdbuf, 6, "flashcards.tex");
 
 	compile();
 	cocmds();
