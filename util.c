@@ -94,6 +94,17 @@ erealloc(void *p, size_t size)
 	return p;
 }
 
+int
+find(const char *haystack, const char *needle)
+{
+	char *p;
+
+	if ((p = strstr(haystack, needle)) == NULL)
+		return strlen(haystack);
+
+	return p - haystack;
+}
+
 void
 print(char **s, const char *fmt, ...)
 {
@@ -109,4 +120,23 @@ print(char **s, const char *fmt, ...)
 
 	va_end(cpy);
 	va_end(ap);
+}
+
+char *
+tok(char *s, const char *delim)
+{
+	char *end, *tok;
+	static char *saveptr;
+
+	if ((tok = s ? s : saveptr) == NULL)
+		return tok;
+
+	if ((end = strstr(tok, delim)) == NULL) {
+		saveptr = end;
+	} else {
+		saveptr = end + strlen(delim);
+		*end = '\0';
+	}
+
+	return tok;
 }

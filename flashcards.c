@@ -5,6 +5,9 @@
 #include "util.h"
 
 #define PAGESPERSIDE 8
+#define STARTBLANK "{{"
+#define HINTDELIM "::"
+#define ENDBLANK "}}"
 
 typedef struct {
 	char *answer;
@@ -22,10 +25,9 @@ static void csentence(const char *s, Flashcard *f);
 static void extrblank(const char *s, Flashcard *f);
 static void fillblank(char *s);
 static void fillbuf(int start, int offset);
-static int find(const char *haystack, const char *needle);
 static void initbuf(void);
 static void insert(const char *s, int n, const char *file);
-static int nblanks(const char *s);
+static int  nblanks(const char *s);
 static void read(const char *file);
 static void reorder(void);
 static void replblank(char *s);
@@ -193,11 +195,11 @@ extrblank(const char *s, Flashcard *f)
 	}
 
 	cpy = strdup(s);
-	tmp = strstr(cpy, "{{") + 2;
-	tmp = strtok(tmp, "}}");
+	tmp = strstr(cpy, STARTBLANK) + 2;
+	tmp = tok(tmp, ENDBLANK);
 
-	f->answer = strdup(strtok(tmp, "::"));
-	f->hint = (tmp = strtok(NULL, "::")) ? strdup(tmp) : strdup("...");
+	f->answer = strdup(tok(tmp, "::"));
+	f->hint = (tmp = tok(NULL, "::")) ? strdup(tmp) : strdup("...");
 
 	free(cpy);
 }
@@ -210,13 +212,13 @@ fillblank(char *s)
 
 	buf = ecalloc(strlen(s), sizeof(*buf));
 
-	for (i = 0, j = 0; i < find(s, "{{"); ++i, ++j)
+	for (i = 0, j = 0; i < find(s, STARTBLANK); ++i, ++j)
 		buf[j] = s[i];
 
-	for (i += 2; i < find(s, "::") && i < find(s, "}}"); ++i, ++j)
+	for (i += 2; i < find(s, HINTDELIM) && i < find(s, ENDBLANK); ++i, ++j)
 		buf[j] = s[i];
 
-	for (i = find(s, "}}") + 2; i < strlen(s); ++i, ++j)
+	for (i = find(s, ENDBLANK) + 2; i < strlen(s); ++i, ++j)
 		buf[j] = s[i];
 
 	strcpy(s, buf);
@@ -236,17 +238,6 @@ fillbuf(int start, int offset)
 				print(&pagebuf[i], "%d", j + k - start);
 		}
 	}
-}
-
-static int
-find(const char *haystack, const char *needle)
-{
-	char *p;
-
-	if ((p = strstr(haystack, needle)) == NULL)
-		return strlen(haystack);
-
-	return p - haystack;
 }
 
 static void
@@ -297,7 +288,7 @@ nblanks(const char *s)
 	int i = 0;
 	const char *p = s;
 
-	while ((p = strstr(p, "{{")) && (p = strstr(p, "}}")))
+	while ((p = strstr(p, STARTBLANK)) && (p = strstr(p, ENDBLANK)))
 		++i;
 
 	return i;
@@ -355,13 +346,13 @@ replblank(char *s)
 
 	buf = ecalloc(strlen(s), sizeof(*buf));
 
-	for (i = 0, j = 0; i < find(s, "{{"); ++i, ++j)
+	for (i = 0, j = 0; i < find(s, STARTBLANK); ++i, ++j)
 		buf[j] = s[i];
 
 	buf[j++] = '%';
 	buf[j++] = 's';
 
-	for (i = find(s, "}}") + 2; i < strlen(s); ++i, ++j)
+	for (i = find(s, ENDBLANK) + 2; i < strlen(s); ++i, ++j)
 		buf[j] = s[i];
 
 	strcpy(s, buf);
