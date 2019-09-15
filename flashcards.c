@@ -52,8 +52,8 @@ ccmd(Flashcard f)
 		return fcard;
 	}
 
-	print(&answer, "{\\answer{%s}}", f.answer);
-	print(&hint, "{\\hint{%s}}", f.hint);
+	print(&answer, "\\answer{%s}", f.answer);
+	print(&hint, "\\hint{%s}", f.hint);
 
 	print(&back, f.sentence, answer);
 	print(&front, f.sentence, hint);
@@ -269,7 +269,7 @@ insert(const char *s, int n, const char *file)
 		die("flashcards: %s:", file);
 
 	for (i = 0; i < lines; ++i) {
-		if (i == n)
+		if (i == n - 1)
 			fputs(s, fp);
 
 		fputs(buf[i], fp);
