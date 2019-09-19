@@ -405,7 +405,7 @@ main(int argc, char **argv)
 
 	read(argv[1]);
 	cfcmds();
-	insert(fcmdbuf, 6, "flashcards.tex");
+	insert(fcmdbuf, 4, "flashcards.tex");
 
 	compile();
 	cocmds();
