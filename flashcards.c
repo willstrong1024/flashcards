@@ -26,9 +26,9 @@ static void extrblank(const char *s, Flashcard *f);
 static void fillblank(char *s);
 static void fillbuf(int start, int offset);
 static void initbuf(void);
-static void insert(const char *s, int n, const char *file);
+static void insert(const char *s, int n, const char *f);
 static int  nblanks(const char *s);
-static void read(const char *file);
+static void read(const char *f);
 static void reorder(void);
 static void replblank(char *s);
 static size_t rlines(char ***buf, FILE *fp);
@@ -251,25 +251,25 @@ initbuf(void)
 }
 
 static void
-insert(const char *s, int n, const char *file)
+insert(const char *s, int n, const char *f)
 {
 	char **buf = NULL;
 	FILE *fp;
 	int i;
 	size_t lines;
 
-	if ((fp = fopen(file, "r")) == NULL)
-		die("flashcards: %s:", file);
+	if ((fp = fopen(f, "r")) == NULL)
+		die("flashcards: %s:", f);
 
 	lines = rlines(&buf, fp);
 
 	fclose(fp);
 
-	if ((fp = fopen(file, "w")) == NULL)
-		die("flashcards: %s:", file);
+	if ((fp = fopen(f, "w")) == NULL)
+		die("flashcards: %s:", f);
 
 	for (i = 0; i < lines; ++i) {
-		if (i == n - 1)
+		if (i == n)
 			fputs(s, fp);
 
 		fputs(buf[i], fp);
@@ -295,15 +295,15 @@ nblanks(const char *s)
 }
 
 static void
-read(const char *file)
+read(const char *f)
 {
 	FILE *fp;
 	int i;
 	size_t len = 0;
 	char *tmp = NULL;
 
-	if ((fp = fopen(file, "r")) == NULL)
-		die("flashcards: %s:", file);
+	if ((fp = fopen(f, "r")) == NULL)
+		die("flashcards: %s:", f);
 
 	for (i = 0; getline(&tmp, &len, fp) != -1; ++i) {
 		if (strcmp(tmp, "\n") == 0)
@@ -397,19 +397,23 @@ rndup(int n, int mult)
 int
 main(int argc, char **argv)
 {
+	int n;
+
 	if (argc != 2)
 		die("usage: flashcards [file]");
 
 	copy("/usr/local/share/flashcards/flashcards.tex", "flashcards.tex");
 	copy("/usr/local/share/flashcards/output.tex", "output.tex");
 
+	n = line("\\begin{document}", "flashcards.tex");
 	read(argv[1]);
 	cfcmds();
-	insert(fcmdbuf, 4, "flashcards.tex");
+	insert(fcmdbuf, n + 1, "flashcards.tex");
 
+	n = line("\\begin{document}", "output.tex");
 	compile();
 	cocmds();
-	insert(ocmdbuf, 4, "output.tex");
+	insert(ocmdbuf, n, "output.tex");
 
 	cleanup();
 

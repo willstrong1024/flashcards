@@ -105,6 +105,27 @@ find(const char *haystack, const char *needle)
 	return p - haystack;
 }
 
+int
+line(const char *s, const char *f)
+{
+	FILE *fp;
+	int i;
+	size_t len = 0;
+	char *tmp = NULL;
+
+	if ((fp = fopen(f, "r")) == NULL)
+		die("flashcards: %s:", f);
+
+	for (i = 1; getline(&tmp, &len, fp) != -1; ++i)
+		if (strstr(tmp, s) != NULL)
+			break;
+
+	free(tmp);
+	fclose(fp);
+
+	return i;
+}
+
 void
 print(char **s, const char *fmt, ...)
 {
