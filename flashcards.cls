@@ -24,7 +24,7 @@
 	\end{center}
 	\vspace*{\fill}
 }
-\newcommand{\highlight}[1]{\textcolor{blue}{\bm\textbf{#1}}}
+\newcommand{\highlight}[1]{\textcolor{blue}{\ifmmode\mathbf{#1}\else\textbf{#1}\fi}}
 \newcommand{\hint}[1]{\highlight{[#1]}}
 
 \pagenumbering{gobble}
