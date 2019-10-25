@@ -1,5 +1,5 @@
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{flashcards}[28/08/2019 Flashcards Class]
+\ProvidesClass{flashcards}[25/10/2019 flashcards class by William Strong]
 
 \LoadClass{article}
 
@@ -24,7 +24,7 @@
 	\end{center}
 	\vspace*{\fill}
 }
-\newcommand{\highlight}[1]{\textcolor{blue}{\ifmmode\mathbf{#1}\else\textbf{#1}\fi}}
+\newcommand{\highlight}[1]{\textcolor{blue}{#1}}
 \newcommand{\hint}[1]{\highlight{[#1]}}
 
 \pagenumbering{gobble}
