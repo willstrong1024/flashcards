@@ -22,6 +22,7 @@ static char *ccmd(Flashcard f);
 static void cfcards(const char *s);
 static void cfcmds(void);
 static void cleanup(void);
+static int cntstr(const char *h, const char *n);
 static void cocmds(void);
 static void compile(void);
 static void copy(const char *src, const char *dest);
@@ -38,6 +39,7 @@ static void print(char **s, const char *fmt, ...);
 static void read(const char *f);
 static void reorder(void);
 static void replblank(char *s);
+static void replstr(char **h, const char *n, const char *r);
 static size_t rlines(char ***buf, FILE *fp);
 static int rndup(int n, int m);
 static char *tok(char *s, const char *delim);
@@ -159,6 +161,17 @@ cleanup(void)
 	free(pagebuf);
 }
 
+static int
+cntstr(const char *h, const char *n)
+{
+	int i;
+
+	for (i = 0; (h = strstr(h, n)); h += strlen(n))
+		++i;
+
+	return i;
+}
+
 static void
 cocmds(void)
 {
@@ -218,6 +231,10 @@ csentence(const char *s, Flashcard *f)
 	int i;
 
 	cpy = strdup(s);
+
+	if (nblanks(cpy) > 0)
+		replstr(&cpy, "%", "%%");
+
 	replblank(cpy);
 
 	for (i = 0; i < nblanks(s) - 1; ++i)
@@ -452,6 +469,41 @@ replblank(char *s)
 		buf[j] = s[i];
 
 	strcpy(s, buf);
+	free(buf);
+}
+
+static void
+replstr(char **h, const char *n, const char *r)
+{
+	char *bp, *buf;
+	const char *hp;
+	size_t len;
+
+	len = strlen(*h) + (strlen(r) - strlen(n)) * cntstr(*h, n) + 1;
+	buf = ecalloc(len, sizeof(*buf));
+	*h = realloc(*h, sizeof(**h) * len);
+
+	bp = buf;
+	hp = *h;
+
+	while (1) {
+		const char *p = strstr(hp, n);
+
+		if (p == NULL) {
+			strcpy(bp, hp);
+			break;
+		}
+
+		memcpy(bp, hp, p - hp);
+		bp += p - hp;
+
+		memcpy(bp, r, strlen(r));
+		bp += strlen(r);
+
+		hp = p + strlen(n);
+	}
+
+	strcpy(*h, buf);
 	free(buf);
 }
 
