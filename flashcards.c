@@ -1,3 +1,4 @@
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,24 +16,31 @@ typedef struct {
 	char *sentence;
 } Flashcard;
 
+
+static char *cat(char **dest, size_t *size, const char *src);
 static char *ccmd(Flashcard f);
 static void cfcards(const char *s);
 static void cfcmds(void);
-static void cocmds(void);
 static void cleanup(void);
+static void cocmds(void);
 static void compile(void);
+static void copy(const char *src, const char *dest);
 static void csentence(const char *s, Flashcard *f);
 static void extrblank(const char *s, Flashcard *f);
 static void fillblank(char *s);
 static void fillbuf(int start, int offset);
+static int find(const char *h, const char *n);
 static void initbuf(void);
 static void insert(const char *s, int n, const char *f);
+static int line(const char *s, const char *f);
 static int  nblanks(const char *s);
+static void print(char **s, const char *fmt, ...);
 static void read(const char *f);
 static void reorder(void);
 static void replblank(char *s);
 static size_t rlines(char ***buf, FILE *fp);
 static int rndup(int n, int m);
+static char *tok(char *s, const char *delim);
 
 static int fcardcnt = 0;
 static Flashcard *fcards;
@@ -41,6 +49,26 @@ static size_t fsize = 0;
 static char *ocmdbuf = NULL;
 static char **pagebuf;
 static int pages;
+
+static char *
+cat(char **dest, size_t *size, const char *src)
+{
+	size_t dsize, needed, ssize;
+
+	if (*dest == NULL) {
+		*dest = strdup("\0");
+		*size = 1;
+	}
+
+	dsize = sizeof(**dest) * strlen(*dest);
+	ssize = sizeof(*src) * strlen(src);
+	needed = dsize + ssize + sizeof(**dest) * 1;
+
+	if (*size < needed)
+		*dest = erealloc(*dest, *size = needed);
+
+	return strcat(*dest, src);
+}
 
 static char *
 ccmd(Flashcard f)
@@ -112,6 +140,26 @@ cfcmds(void)
 }
 
 static void
+cleanup(void)
+{
+	int i;
+
+	free(fcmdbuf);
+	free(ocmdbuf);
+
+	for (i = 0; i < fcardcnt; ++i) {
+		free(fcards[i].answer);
+		free(fcards[i].hint);
+		free(fcards[i].sentence);
+	}
+	free(fcards);
+
+	for (i = 0; i < pages; ++i)
+		free(pagebuf[i]);
+	free(pagebuf);
+}
+
+static void
 cocmds(void)
 {
 	int i;
@@ -138,30 +186,29 @@ cocmds(void)
 }
 
 static void
-cleanup(void)
-{
-	int i;
-
-	free(fcmdbuf);
-	free(ocmdbuf);
-
-	for (i = 0; i < fcardcnt; ++i) {
-		free(fcards[i].answer);
-		free(fcards[i].hint);
-		free(fcards[i].sentence);
-	}
-	free(fcards);
-
-	for (i = 0; i < pages; ++i)
-		free(pagebuf[i]);
-	free(pagebuf);
-}
-
-static void
 compile(void)
 {
 	initbuf();
 	reorder();
+}
+
+static void
+copy(const char *src, const char *dest)
+{
+	FILE *fin, *fout;
+	int tmp;
+
+	if ((fin = fopen(src, "r")) == NULL)
+		die("flashcards: %s:", src);
+
+	if ((fout = fopen(dest, "w")) == NULL)
+		die("flashcards: %s:", dest);
+
+	while ((tmp = fgetc(fin)) != EOF)
+		fputc(tmp, fout);
+
+	fclose(fin);
+	fclose(fout);
 }
 
 static void
@@ -240,6 +287,17 @@ fillbuf(int start, int offset)
 	}
 }
 
+static int
+find(const char *h, const char *n)
+{
+	char *p;
+
+	if ((p = strstr(h, n)) == NULL)
+		return strlen(h);
+
+	return p - h;
+}
+
 static void
 initbuf(void)
 {
@@ -283,15 +341,53 @@ insert(const char *s, int n, const char *f)
 }
 
 static int
+line(const char *s, const char *f)
+{
+	FILE *fp;
+	int i;
+	size_t len = 0;
+	char *tmp = NULL;
+
+	if ((fp = fopen(f, "r")) == NULL)
+		die("flashcards: %s:", f);
+
+	for (i = 1; getline(&tmp, &len, fp) != -1; ++i)
+		if (strstr(tmp, s) != NULL)
+			break;
+
+	free(tmp);
+	fclose(fp);
+
+	return i;
+}
+
+static int
 nblanks(const char *s)
 {
-	int i = 0;
 	const char *p = s;
+	int i = 0;
 
 	while ((p = strstr(p, STARTBLANK)) && (p = strstr(p, ENDBLANK)))
 		++i;
 
 	return i;
+}
+
+static void
+print(char **s, const char *fmt, ...)
+{
+	va_list ap, cpy;
+	size_t len;
+
+	va_start(ap, fmt);
+	va_copy(cpy, ap);
+
+	len = vsnprintf(NULL, 0, fmt, cpy) + 1;
+	*s = emalloc(sizeof(**s) * len);
+	vsprintf(*s, fmt, ap);
+
+	va_end(cpy);
+	va_end(ap);
 }
 
 static void
@@ -392,6 +488,25 @@ rndup(int n, int mult)
 		return n;
 
 	return n + mult - rmndr;
+}
+
+static char *
+tok(char *s, const char *delim)
+{
+	char *end, *tok;
+	static char *saveptr;
+
+	if ((tok = s ? s : saveptr) == NULL)
+		return tok;
+
+	if ((end = strstr(tok, delim)) == NULL) {
+		saveptr = end;
+	} else {
+		saveptr = end + strlen(delim);
+		*end = '\0';
+	}
+
+	return tok;
 }
 
 int

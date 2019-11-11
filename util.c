@@ -5,45 +5,6 @@
 
 #include "util.h"
 
-char *
-cat(char **dest, size_t *size, const char *src)
-{
-	size_t dsize, needed, ssize;
-
-	if (*dest == NULL) {
-		*dest = strdup("\0");
-		*size = 1;
-	}
-
-	dsize = sizeof(**dest) * strlen(*dest);
-	ssize = sizeof(*src) * strlen(src);
-	needed = dsize + ssize + sizeof(**dest) * 1;
-
-	if (*size < needed)
-		*dest = erealloc(*dest, *size = needed);
-
-	return strcat(*dest, src);
-}
-
-void
-copy(const char *src, const char *dest)
-{
-	FILE *fin, *fout;
-	int tmp;
-
-	if ((fin = fopen(src, "r")) == NULL)
-		die("flashcards: %s:", src);
-
-	if ((fout = fopen(dest, "w")) == NULL)
-		die("flashcards: %s:", dest);
-
-	while ((tmp = fgetc(fin)) != EOF)
-		fputc(tmp, fout);
-
-	fclose(fin);
-	fclose(fout);
-}
-
 void
 die(const char *fmt, ...)
 {
@@ -92,72 +53,4 @@ erealloc(void *p, size_t size)
 		die("flashcards: realloc:");
 
 	return p;
-}
-
-int
-find(const char *haystack, const char *needle)
-{
-	char *p;
-
-	if ((p = strstr(haystack, needle)) == NULL)
-		return strlen(haystack);
-
-	return p - haystack;
-}
-
-int
-line(const char *s, const char *f)
-{
-	FILE *fp;
-	int i;
-	size_t len = 0;
-	char *tmp = NULL;
-
-	if ((fp = fopen(f, "r")) == NULL)
-		die("flashcards: %s:", f);
-
-	for (i = 1; getline(&tmp, &len, fp) != -1; ++i)
-		if (strstr(tmp, s) != NULL)
-			break;
-
-	free(tmp);
-	fclose(fp);
-
-	return i;
-}
-
-void
-print(char **s, const char *fmt, ...)
-{
-	va_list ap, cpy;
-	size_t len;
-
-	va_start(ap, fmt);
-	va_copy(cpy, ap);
-
-	len = vsnprintf(NULL, 0, fmt, cpy) + 1;
-	*s = emalloc(sizeof(**s) * len);
-	vsprintf(*s, fmt, ap);
-
-	va_end(cpy);
-	va_end(ap);
-}
-
-char *
-tok(char *s, const char *delim)
-{
-	char *end, *tok;
-	static char *saveptr;
-
-	if ((tok = s ? s : saveptr) == NULL)
-		return tok;
-
-	if ((end = strstr(tok, delim)) == NULL) {
-		saveptr = end;
-	} else {
-		saveptr = end + strlen(delim);
-		*end = '\0';
-	}
-
-	return tok;
 }
